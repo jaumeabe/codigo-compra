@@ -1,0 +1,52 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+  background: #f4f6f9;
+  color: #222;
+  padding: 20px;
+}
+.container { max-width: 760px; margin: 0 auto; }
+header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+}
+h1 { font-size: 22px; margin: 0; }
+.card {
+  background: #fff; border-radius: 10px; padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+}
+label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+input, textarea, select {
+  width: 100%; padding: 10px 12px; border: 1px solid #d0d5dd;
+  border-radius: 6px; font-size: 14px; font-family: inherit; margin-bottom: 14px;
+}
+textarea { resize: vertical; min-height: 70px; }
+button {
+  background: #2563eb; color: #fff; border: none; padding: 11px 18px;
+  border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+button:hover { background: #1d4ed8; }
+button.secondary { background: #64748b; }
+button.secondary:hover { background: #475569; }
+button.danger { background: #dc2626; }
+button.danger:hover { background: #b91c1c; }
+button.link {
+  background: none; color: #2563eb; padding: 6px 10px; font-size: 13px;
+}
+button.link:hover { background: #eff6ff; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.result {
+  margin-top: 16px; padding: 18px; background: #ecfdf5;
+  border: 1px solid #10b981; border-radius: 8px; text-align: center;
+}
+.result .code { font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 1px; }
+.error {
+  margin-top: 12px; padding: 12px; background: #fef2f2;
+  border: 1px solid #fecaca; border-radius: 6px; color: #991b1b; font-size: 13px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+th { background: #f9fafb; font-weight: 600; }
+.toolbar { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+.empty { text-align: center; color: #888; padding: 20px; }
+.table-wrap { overflow-x: auto; }
