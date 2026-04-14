@@ -4,7 +4,11 @@ import { uploadToOneDrive } from '@/lib/graph';
 export const runtime = 'nodejs';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+
+function isAllowed(type) {
+  if (!type) return true; // algunos móviles no mandan MIME
+  return type.startsWith('image/') || type === 'application/pdf';
+}
 
 export async function POST(req) {
   try {
@@ -16,7 +20,7 @@ export async function POST(req) {
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: 'Archivo demasiado grande (máx 10 MB)' }, { status: 400 });
     }
-    if (file.type && !ALLOWED.includes(file.type)) {
+    if (!isAllowed(file.type)) {
       return NextResponse.json({ error: `Tipo no permitido: ${file.type}` }, { status: 400 });
     }
 
