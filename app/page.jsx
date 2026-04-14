@@ -7,7 +7,7 @@ export default function Page() {
   const [form, setForm] = useState({
     fecha: today, granja: '', descripcion: '', proveedor: '', importe: '', comprador: ''
   });
-  const [albaranFile, setAlbaranFile] = useState(null);
+  const [albaranFiles, setAlbaranFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState(null);
   const [error, setError] = useState(null);
@@ -31,25 +31,25 @@ export default function Page() {
     setError(null);
     setGeneratedCode(null);
     try {
-      let albaran_url = null;
-      if (albaranFile) {
+      let albaran_urls = [];
+      if (albaranFiles.length > 0) {
         const fd = new FormData();
-        fd.append('file', albaranFile);
+        for (const f of albaranFiles) fd.append('file', f);
         const up = await fetch('/api/upload', { method: 'POST', body: fd });
         const upData = await up.json();
-        if (!up.ok) throw new Error(upData.error || 'Error subiendo albarán');
-        albaran_url = upData.url;
+        if (!up.ok) throw new Error(upData.error || 'Error subiendo albaranes');
+        albaran_urls = upData.urls || [];
       }
       const res = await fetch('/api/records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, albaran_url })
+        body: JSON.stringify({ ...form, albaran_urls })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
       setGeneratedCode(data.codigo);
       setForm({ fecha: today, granja: '', descripcion: '', proveedor: '', importe: '', comprador: '' });
-      setAlbaranFile(null);
+      setAlbaranFiles([]);
       const fi = document.getElementById('albaranInput');
       if (fi) fi.value = '';
     } catch (err) {
@@ -144,18 +144,20 @@ export default function Page() {
             <label>Comprador</label>
             <input type="text" value={form.comprador} onChange={e => update('comprador', e.target.value)} required placeholder="Nombre del comprador" />
 
-            <label>Foto del albarán (opcional)</label>
+            <label>Fotos del albarán (opcional, puedes seleccionar varias)</label>
             <input
               id="albaranInput"
               type="file"
               accept="image/*,application/pdf"
-              capture="environment"
-              onChange={e => setAlbaranFile(e.target.files?.[0] || null)}
+              multiple
+              onChange={e => setAlbaranFiles(Array.from(e.target.files || []))}
             />
-            {albaranFile && (
-              <div style={{ fontSize: 12, color: '#555', marginTop: -8, marginBottom: 14 }}>
-                {albaranFile.name} ({(albaranFile.size / 1024).toFixed(0)} KB)
-              </div>
+            {albaranFiles.length > 0 && (
+              <ul style={{ fontSize: 12, color: '#555', marginTop: -8, marginBottom: 14, paddingLeft: 18 }}>
+                {albaranFiles.map((f, i) => (
+                  <li key={i}>{f.name} ({(f.size / 1024).toFixed(0)} KB)</li>
+                ))}
+              </ul>
             )}
 
             <button type="submit" disabled={loading}>
@@ -227,8 +229,13 @@ export default function Page() {
                       <td>{Number(r.importe).toFixed(2)} €</td>
                       <td>{r.comprador}</td>
                       <td>
-                        {r.albaran_url ? (
-                          <a href={r.albaran_url} target="_blank" rel="noreferrer">Ver</a>
+                        {r.albaran_urls && r.albaran_urls.length > 0 ? (
+                          r.albaran_urls.map((u, i) => (
+                            <span key={i}>
+                              {i > 0 && ' · '}
+                              <a href={u} target="_blank" rel="noreferrer">Ver {i + 1}</a>
+                            </span>
+                          ))
                         ) : '—'}
                       </td>
                     </tr>

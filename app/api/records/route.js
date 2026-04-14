@@ -8,7 +8,8 @@ export async function POST(req) {
   try {
     await ensureSchema();
     const body = await req.json();
-    const { fecha, granja, descripcion, proveedor, importe, comprador, albaran_url } = body || {};
+    const { fecha, granja, descripcion, proveedor, importe, comprador, albaran_urls } = body || {};
+    const urls = Array.isArray(albaran_urls) ? albaran_urls.filter(Boolean) : [];
 
     if (!fecha || !granja || !descripcion || !proveedor || importe == null || !comprador) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
@@ -28,8 +29,8 @@ export async function POST(req) {
     const codigo = 'C-' + String(next).padStart(4, '0');
 
     const inserted = await sql`
-      INSERT INTO purchase_codes (codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_url)
-      VALUES (${codigo}, ${fecha}, ${granja}, ${descripcion}, ${proveedor}, ${importeNum}, ${comprador}, ${albaran_url || null})
+      INSERT INTO purchase_codes (codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_urls)
+      VALUES (${codigo}, ${fecha}, ${granja}, ${descripcion}, ${proveedor}, ${importeNum}, ${comprador}, ${urls})
       RETURNING codigo
     `;
     return NextResponse.json({ codigo: inserted[0].codigo });
@@ -47,11 +48,17 @@ export async function GET(req) {
   try {
     await ensureSchema();
     const rows = await sql`
-      SELECT codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_url, created_at
+      SELECT codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_url, albaran_urls, created_at
       FROM purchase_codes
       ORDER BY id DESC
     `;
-    return NextResponse.json({ records: rows });
+    // Merge del campo legado con el array nuevo
+    const records = rows.map(r => {
+      const list = Array.isArray(r.albaran_urls) ? r.albaran_urls.slice() : [];
+      if (r.albaran_url && !list.includes(r.albaran_url)) list.unshift(r.albaran_url);
+      return { ...r, albaran_urls: list };
+    });
+    return NextResponse.json({ records });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
