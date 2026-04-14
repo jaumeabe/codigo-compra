@@ -8,7 +8,7 @@ export async function POST(req) {
   try {
     await ensureSchema();
     const body = await req.json();
-    const { fecha, granja, descripcion, proveedor, importe, comprador } = body || {};
+    const { fecha, granja, descripcion, proveedor, importe, comprador, albaran_url } = body || {};
 
     if (!fecha || !granja || !descripcion || !proveedor || importe == null || !comprador) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
@@ -28,8 +28,8 @@ export async function POST(req) {
     const codigo = 'C-' + String(next).padStart(4, '0');
 
     const inserted = await sql`
-      INSERT INTO purchase_codes (codigo, fecha, granja, descripcion, proveedor, importe, comprador)
-      VALUES (${codigo}, ${fecha}, ${granja}, ${descripcion}, ${proveedor}, ${importeNum}, ${comprador})
+      INSERT INTO purchase_codes (codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_url)
+      VALUES (${codigo}, ${fecha}, ${granja}, ${descripcion}, ${proveedor}, ${importeNum}, ${comprador}, ${albaran_url || null})
       RETURNING codigo
     `;
     return NextResponse.json({ codigo: inserted[0].codigo });
@@ -47,7 +47,7 @@ export async function GET(req) {
   try {
     await ensureSchema();
     const rows = await sql`
-      SELECT codigo, fecha, granja, descripcion, proveedor, importe, comprador, created_at
+      SELECT codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_url, created_at
       FROM purchase_codes
       ORDER BY id DESC
     `;

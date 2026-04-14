@@ -10,7 +10,7 @@ export async function GET(req) {
   }
   await ensureSchema();
   const rows = await sql`
-    SELECT codigo, fecha, granja, descripcion, proveedor, importe, comprador, created_at
+    SELECT codigo, fecha, granja, descripcion, proveedor, importe, comprador, albaran_url, created_at
     FROM purchase_codes
     ORDER BY id ASC
   `;
@@ -23,13 +23,23 @@ export async function GET(req) {
     'Proveedor': r.proveedor,
     'Importe (€)': Number(r.importe),
     'Comprador': r.comprador,
+    'Albarán': r.albaran_url || '',
     'Creado': new Date(r.created_at).toLocaleString('es-ES')
   }));
 
   const ws = XLSX.utils.json_to_sheet(data);
   ws['!cols'] = [
-    {wch:10},{wch:12},{wch:22},{wch:38},{wch:22},{wch:12},{wch:20},{wch:20}
+    {wch:10},{wch:12},{wch:22},{wch:38},{wch:22},{wch:12},{wch:20},{wch:40},{wch:20}
   ];
+
+  // Convertir columna Albarán en hipervínculos clicables
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = range.s.r + 1; R <= range.e.r; R++) {
+    const cell = ws[XLSX.utils.encode_cell({ r: R, c: 7 })];
+    if (cell && cell.v) {
+      cell.l = { Target: cell.v, Tooltip: 'Abrir albarán' };
+    }
+  }
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Códigos de compra');
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });

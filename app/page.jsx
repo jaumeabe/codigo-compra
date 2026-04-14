@@ -7,6 +7,7 @@ export default function Page() {
   const [form, setForm] = useState({
     fecha: today, granja: '', descripcion: '', proveedor: '', importe: '', comprador: ''
   });
+  const [albaranFile, setAlbaranFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState(null);
   const [error, setError] = useState(null);
@@ -30,15 +31,27 @@ export default function Page() {
     setError(null);
     setGeneratedCode(null);
     try {
+      let albaran_url = null;
+      if (albaranFile) {
+        const fd = new FormData();
+        fd.append('file', albaranFile);
+        const up = await fetch('/api/upload', { method: 'POST', body: fd });
+        const upData = await up.json();
+        if (!up.ok) throw new Error(upData.error || 'Error subiendo albarán');
+        albaran_url = upData.url;
+      }
       const res = await fetch('/api/records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, albaran_url })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
       setGeneratedCode(data.codigo);
       setForm({ fecha: today, granja: '', descripcion: '', proveedor: '', importe: '', comprador: '' });
+      setAlbaranFile(null);
+      const fi = document.getElementById('albaranInput');
+      if (fi) fi.value = '';
     } catch (err) {
       setError(err.message);
     } finally {
@@ -131,6 +144,20 @@ export default function Page() {
             <label>Comprador</label>
             <input type="text" value={form.comprador} onChange={e => update('comprador', e.target.value)} required placeholder="Nombre del comprador" />
 
+            <label>Foto del albarán (opcional)</label>
+            <input
+              id="albaranInput"
+              type="file"
+              accept="image/*,application/pdf"
+              capture="environment"
+              onChange={e => setAlbaranFile(e.target.files?.[0] || null)}
+            />
+            {albaranFile && (
+              <div style={{ fontSize: 12, color: '#555', marginTop: -8, marginBottom: 14 }}>
+                {albaranFile.name} ({(albaranFile.size / 1024).toFixed(0)} KB)
+              </div>
+            )}
+
             <button type="submit" disabled={loading}>
               {loading ? 'Generando...' : 'Generar código de autorización'}
             </button>
@@ -186,7 +213,7 @@ export default function Page() {
                 <thead>
                   <tr>
                     <th>Código</th><th>Fecha</th><th>Granja</th><th>Descripción</th>
-                    <th>Proveedor</th><th>Importe</th><th>Comprador</th>
+                    <th>Proveedor</th><th>Importe</th><th>Comprador</th><th>Albarán</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -199,6 +226,11 @@ export default function Page() {
                       <td>{r.proveedor}</td>
                       <td>{Number(r.importe).toFixed(2)} €</td>
                       <td>{r.comprador}</td>
+                      <td>
+                        {r.albaran_url ? (
+                          <a href={r.albaran_url} target="_blank" rel="noreferrer">Ver</a>
+                        ) : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
