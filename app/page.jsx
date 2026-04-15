@@ -48,6 +48,9 @@ export default function Page() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
       setGeneratedCode(data.codigo);
+      if (data.syncError) {
+        setError('Código guardado, pero el Excel NO se subió a OneDrive. Detalle: ' + data.syncError);
+      }
       setForm({ fecha: today, granja: '', descripcion: '', proveedor: '', importe: '', comprador: '' });
       setAlbaranFiles([]);
       const fi = document.getElementById('albaranInput');

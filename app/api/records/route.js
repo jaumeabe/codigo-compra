@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { sql, ensureSchema, checkAdmin } from '@/lib/db';
+import { syncExcelToOneDrive } from '@/lib/excel';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // POST = crear registro (público, para cualquier comprador)
 export async function POST(req) {
@@ -33,7 +34,17 @@ export async function POST(req) {
       VALUES (${codigo}, ${fecha}, ${granja}, ${descripcion}, ${proveedor}, ${importeNum}, ${comprador}, ${urls})
       RETURNING codigo
     `;
-    return NextResponse.json({ codigo: inserted[0].codigo });
+
+    // Auto-sync del Excel a OneDrive (no romper la respuesta si falla)
+    let syncError = null;
+    try {
+      await syncExcelToOneDrive();
+    } catch (syncErr) {
+      console.error('syncExcelToOneDrive falló:', syncErr);
+      syncError = syncErr.message || String(syncErr);
+    }
+
+    return NextResponse.json({ codigo: inserted[0].codigo, syncError });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
