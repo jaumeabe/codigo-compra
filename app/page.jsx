@@ -83,6 +83,21 @@ export default function Page() {
     setAdminLoading(false);
   }
 
+  async function saveExcelToOneDrive() {
+    const res = await fetch('/api/export/save', {
+      method: 'POST',
+      headers: { 'x-admin-password': savedPass }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert('Error: ' + (data.error || 'no se pudo guardar'));
+      return;
+    }
+    if (confirm(`Guardado como ${data.name}.\n\n¿Abrir en OneDrive?`)) {
+      window.open(data.url, '_blank');
+    }
+  }
+
   async function downloadExcel() {
     const res = await fetch('/api/export', { headers: { 'x-admin-password': savedPass } });
     if (!res.ok) { alert('Error al descargar'); return; }
@@ -202,6 +217,7 @@ export default function Page() {
           </div>
           <div className="toolbar">
             <button onClick={downloadExcel}>Descargar Excel</button>
+            <button onClick={saveExcelToOneDrive}>Guardar Excel en OneDrive</button>
             <button className="secondary" onClick={refreshRecords} disabled={adminLoading}>
               {adminLoading ? 'Actualizando...' : 'Refrescar'}
             </button>
